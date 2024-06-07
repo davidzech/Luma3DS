@@ -48,8 +48,8 @@ Menu debuggerMenu = {
 
 static MyThread debuggerSocketThread;
 static MyThread debuggerDebugThread;
-static u8 ALIGN(8) debuggerSocketThreadStack[0x5000];
-static u8 ALIGN(8) debuggerDebugThreadStack[0x3000];
+static u8 CTR_ALIGN(8) debuggerSocketThreadStack[0x5000];
+static u8 CTR_ALIGN(8) debuggerDebugThreadStack[0x3000];
 
 GDBServer gdbServer = { 0 };
 
@@ -72,6 +72,8 @@ MyThread *debuggerCreateDebugThread(void)
 void debuggerFetchAndSetNextApplicationDebugHandleTask(void *argdata)
 {
     (void)argdata;
+    if(!nextApplicationGdbCtx)
+        return;
     Handle debug = 0;
     PMDBG_RunQueuedProcess(&debug);
     GDB_LockAllContexts(&gdbServer);

@@ -69,6 +69,14 @@ ControlMemoryHookWrapper:
     add sp, #12
     pop {pc}
 
+
+.global ExitProcessHookWrapper
+.type   ExitProcessHookWrapper, %function
+ExitProcessHookWrapper:
+    push {lr}
+    bl ExitProcessHook
+    pop {pc}
+
 .global ControlMemoryEx
 .type   ControlMemoryEx, %function
 ControlMemoryEx:
@@ -83,4 +91,35 @@ ControlMemoryEx:
     blx r12
     ldr r1, [sp, #12]
     add sp, #20
+    pop {pc}
+
+.global CreateThreadHookWrapper
+.type   CreateThreadHookWrapper, %function
+CreateThreadHookWrapper:
+    push {lr}
+    sub sp, #12
+    str r4, [sp, #4]
+    str r0, [sp]
+    add r0, sp, #8
+    bl CreateThreadHook
+    ldr r1, [sp, #8]
+    add sp, sp, #12
+    pop {pc}
+
+.global ControlMemoryUnsafeWrapper
+.type   ControlMemoryUnsafeWrapper, %function
+ControlMemoryUnsafeWrapper:
+    push {lr}
+    str r4, [sp, #-4]!
+    bl ControlMemoryUnsafe
+    add sp, #4
+    pop {pc}
+
+.global MapProcessMemoryExWrapper
+.type   MapProcessMemoryExWrapper, %function
+MapProcessMemoryExWrapper:
+    push {lr}
+    str r4, [sp, #-4]!
+    bl MapProcessMemoryEx
+    add sp, #4
     pop {pc}
