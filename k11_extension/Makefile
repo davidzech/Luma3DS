@@ -25,12 +25,14 @@ INCLUDES	:=	include include/svc
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
-DEFINES :=	-DARM11 -D_3DS
+# -mgeneral-regs-only so that the C code is guaranteed not to use FPU regs
+ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft -mgeneral-regs-only
+DEFINES :=	-DARM11 -D__3DS__
 
+FALSEPOSITIVES := -Wno-array-bounds -Wno-stringop-overflow -Wno-stringop-overread
 CFLAGS	:=	-g -std=gnu11 -Wall -Wextra -Werror -O2 -mword-relocations \
 			-fomit-frame-pointer -ffunction-sections -fdata-sections \
-			-Wno-main $(ARCH) $(DEFINES)
+			-Wno-main $(FALSEPOSITIVES) $(ARCH) $(DEFINES)
 
 CFLAGS	+=	$(INCLUDE)
 

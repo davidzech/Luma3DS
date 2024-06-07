@@ -27,6 +27,7 @@
 #pragma once
 
 #include "types.h"
+#include <string.h>
 
 extern u32 kernelVersion;
 
@@ -52,7 +53,7 @@ struct KMutexLinkedList;
 struct KPreemptionTimer;
 
 /* 12 */
-typedef struct ALIGN(4) KAutoObject
+typedef struct CTR_ALIGN(4) KAutoObject
 {
   struct Vtable__KAutoObject *vtable;
   u32 refCount;
@@ -95,7 +96,7 @@ typedef struct KMutexLinkedListNode
 } KMutexLinkedListNode;
 
 /* 1 */
-typedef struct ALIGN(4) KMutex
+typedef struct CTR_ALIGN(4) KMutex
 {
   KSynchronizationObject syncObject;
   KMutexLinkedListNode mutexListNode;
@@ -105,12 +106,44 @@ typedef struct ALIGN(4) KMutex
   union KProcess *owner;
 } KMutex;
 
+typedef struct KAddressArbiter
+{
+  KAutoObject     autoObject;
+  struct KThread  *first;
+  struct KThread  *last;
+  union  KProcess *owner;
+} KAddressArbiter;
+
 /* 92 */
 typedef struct KMutexLinkedList
 {
   KMutex *first;
   KMutex *last;
 } KMutexLinkedList;
+
+enum
+{
+    TOKEN_KAUTOOBJECT = 0,
+    TOKEN_KSYNCHRONIZATIONOBJECT = 1,
+    TOKEN_KEVENT = 0x1F,
+    TOKEN_KSEMAPHORE = 0x2F,
+    TOKEN_KTIMER = 0x35,
+    TOKEN_KMUTEX = 0x39,
+    TOKEN_KDEBUG = 0x4D,
+    TOKEN_KSERVERPORT = 0x55,
+    TOKEN_KDMAOBJECT = 0x59,
+    TOKEN_KCLIENTPORT = 0x65,
+    TOKEN_KCODESET = 0x68,
+    TOKEN_KSESSION = 0x70,
+    TOKEN_KTHREAD = 0x8D,
+    TOKEN_KSERVERSESSION = 0x95,
+    TOKEN_KADDRESSARBITER = 0x98,
+    TOKEN_KCLIENTSESSION = 0xA5,
+    TOKEN_KPORT = 0xA8,
+    TOKEN_KSHAREDMEMORY = 0xB0,
+    TOKEN_KPROCESS = 0xC5,
+    TOKEN_KRESOURCELIMIT = 0xC8
+};
 
 /* 45 */
 typedef struct KClassToken
@@ -120,7 +153,7 @@ typedef struct KClassToken
 } KClassToken;
 
 /* 44 */
-typedef struct ALIGN(4) Vtable__KAutoObject
+typedef struct CTR_ALIGN(4) Vtable__KAutoObject
 {
   void *field_0;
   void *field_4;
@@ -141,7 +174,7 @@ typedef struct KBaseInterruptEvent
 } KBaseInterruptEvent;
 
 /* 55 */
-typedef struct ALIGN(4) Vtable__KBaseInterruptEvent
+typedef struct CTR_ALIGN(4) Vtable__KBaseInterruptEvent
 {
   struct KSchedulableInterruptEvent *(*handleInterruptEvent)(KBaseInterruptEvent *, u32);
 } Vtable__KBaseInterruptEvent;
@@ -177,7 +210,7 @@ typedef struct KThreadLinkedListNode
 
 
 /* 93 */
-typedef struct ALIGN(4) KPreemptionTimer
+typedef struct CTR_ALIGN(4) KPreemptionTimer
 {
   u32 nLimitedTicks;
   u32 timer;
@@ -186,7 +219,7 @@ typedef struct ALIGN(4) KPreemptionTimer
 } KPreemptionTimer;
 
 /* 15 */
-typedef struct PACKED ALIGN(4) KThread
+typedef struct CTR_PACKED CTR_ALIGN(4) KThread
 {
   KSynchronizationObject syncObject;
   KTimeableInterruptEvent timeableInterruptEvent;
@@ -244,7 +277,7 @@ typedef enum ProcessStatus
 } ProcessStatus;
 
 /* 3 */
-typedef struct ALIGN(4) HandleDescriptor
+typedef struct CTR_ALIGN(4) HandleDescriptor
 {
   u32 info;
   KAutoObject *pointer;
@@ -264,7 +297,7 @@ typedef struct KProcessHandleTable
 } KProcessHandleTable;
 
 /* 4 */
-typedef struct ALIGN(4) KDebugThread
+typedef struct CTR_ALIGN(4) KDebugThread
 {
   KThread *linkedThread;
   bool usedSvcBreak;
@@ -322,7 +355,7 @@ typedef enum {
 } ExceptionEventType;
 
 /* 6 */
-typedef struct ALIGN(4) KDebug
+typedef struct CTR_ALIGN(4) KDebug
 {
   KSynchronizationObject syncObject;
   KSendableInterruptEvent sendableInterruptEvent;
@@ -389,7 +422,7 @@ typedef struct KCodeSetMemDescriptor
 } KCodeSetMemDescriptor;
 
 /* 5 */
-typedef struct PACKED ALIGN(4) KCodeSet
+typedef struct CTR_PACKED CTR_ALIGN(4) KCodeSet
 {
   KAutoObject autoObject;
   KCodeSetMemDescriptor textSection;
@@ -464,7 +497,7 @@ typedef struct KUserBindableInterruptEvent
 } KUserBindableInterruptEvent;
 
 /* 14 */
-typedef struct ALIGN(4) KEvent
+typedef struct CTR_ALIGN(4) KEvent
 {
   KSynchronizationObject syncObject;
   KUserBindableInterruptEvent userBindableInterruptEvent;
@@ -488,6 +521,9 @@ typedef enum MemOp
   MEMOP_REGION_SYSTEM = 0x200,
   MEMOP_REGION_BASE = 0x300,
   MEMOP_LINEAR = 0x10000,
+
+  MEMOP_OP_MASK = 0xFF,
+  MEMOP_REGION_MASK = 0xF00,
 } MemOp;
 
 /* 17 */
@@ -540,6 +576,20 @@ typedef struct KBlockInfo
   u32 pageCount;
 } KBlockInfo;
 
+typedef struct KSharedMemory
+{
+  KAutoObject   autoObject;
+  KLinkedList   ownedKBlockInfo;
+  union KProcess *owner;
+  u32           ownerPermissions;
+  u32           otherPermissions;
+  u8            isBlockInfoGenerated;
+  s8            allBlockInfoGenerated;
+  u8            unknown_1;
+  u8            unknown_2;
+  u32           address;
+} KSharedMemory;
+
 /* 25 */
 typedef struct KMemoryBlock
 {
@@ -551,7 +601,7 @@ typedef struct KMemoryBlock
 } KMemoryBlock;
 
 /* 28 */
-typedef struct ALIGN(4) KScheduler
+typedef struct CTR_ALIGN(4) KScheduler
 {
   KSchedulableInterruptEvent interruptEvent;
   u32 threadSwitchAttempts;
@@ -569,7 +619,7 @@ typedef struct ALIGN(4) KScheduler
 } KScheduler;
 
 /* 46 */
-typedef struct PACKED CodeSetInfo
+typedef struct CTR_PACKED CodeSetInfo
 {
   char name[8];
   u16 unknown_1;
@@ -589,7 +639,7 @@ typedef struct PACKED CodeSetInfo
 } CodeSetInfo;
 
 /* 53 */
-typedef struct ALIGN(4) InterruptData
+typedef struct CTR_ALIGN(4) InterruptData
 {
   KBaseInterruptEvent *interruptEvent;
   bool disableUponReceipt;
@@ -690,7 +740,7 @@ typedef enum ResetType
 } ResetType;
 
 /* 81 */
-typedef struct PACKED ALIGN(4) KTimer
+typedef struct CTR_PACKED CTR_ALIGN(4) KTimer
 {
   KSynchronizationObject syncObject;
   KTimeableInterruptEvent timeableInterruptEvent;
@@ -718,7 +768,7 @@ typedef KSchedulableInterruptEvent KThreadTerminationInterruptEvent;
 typedef KSchedulableInterruptEvent KThreadExitInterruptEvent;
 
 /* 89 */
-typedef struct ALIGN(4) KInterruptEventMailbox
+typedef struct CTR_ALIGN(4) KInterruptEventMailbox
 {
   u32 mailboxID;
   KSendableInterruptEvent *first;
@@ -745,7 +795,7 @@ typedef enum LimitableResource
 } LimitableResource;
 
 /* 99 */
-typedef struct ALIGN(4) CpuRegisters
+typedef struct CTR_ALIGN(4) CpuRegisters
 {
   u32 r[13];
   u32 sp;
@@ -759,7 +809,7 @@ typedef struct FpuRegisters
 {
   union
   {
-      struct PACKED { double d[16]; };
+      struct CTR_PACKED { double d[16]; };
       float  s[32];
   };
   u32 fpscr;
@@ -924,7 +974,7 @@ typedef struct KEventInfo
   };
 } KEventInfo;
 
-typedef struct ALIGN(0x1000) KCoreObjectContext
+typedef struct CTR_ALIGN(0x1000) KCoreObjectContext
 {
   KThread *volatile currentThread;
   union KProcess *volatile currentProcess;
@@ -954,7 +1004,7 @@ extern KCoreContext *coreCtxs;
 
 #define DEFINE_CONSOLE_SPECIFIC_STRUCTS(console, nbCores)
 /* 60 */
-typedef struct ALIGN(4) KProcessHwInfoN3DS
+typedef struct CTR_ALIGN(4) KProcessHwInfoN3DS
 {
   KObjectMutex mutex;
   u32 processTLBEntriesNeedToBeFlushedOnCore[4];
@@ -973,7 +1023,7 @@ typedef struct ALIGN(4) KProcessHwInfoN3DS
   u32 *mmuTableVA;
 } KProcessHwInfoN3DS;
 
-typedef struct ALIGN(4) KProcessHwInfoO3DS8x
+typedef struct CTR_ALIGN(4) KProcessHwInfoO3DS8x
 {
   KObjectMutex mutex;
   u32 processTLBEntriesNeedToBeFlushedOnCore[2];
@@ -992,7 +1042,7 @@ typedef struct ALIGN(4) KProcessHwInfoO3DS8x
   u32 *mmuTableVA;
 } KProcessHwInfoO3DS8x;
 
-typedef struct ALIGN(4) KProcessHwInfoO3DSPre8x
+typedef struct CTR_ALIGN(4) KProcessHwInfoO3DSPre8x
 {
   KObjectMutex mutex;
   u32 processTLBEntriesNeedToBeFlushedOnCore[2];
@@ -1037,9 +1087,23 @@ typedef struct KProcess##sys\
   KThread *mainThread;\
   u32 interruptEnabledFlags[4];\
   KProcessHandleTable handleTable;\
-  u8 gap234[52];\
+  /* Custom fields for plugin system */ \
+  /* { */ \
+  u32     customFlags; /* see KProcess_CustomFlags enum below */ \
+  Handle  onMemoryLayoutChangeEvent;\
+  /* } */ \
+  u8 gap234[44];\
   u64 unused;\
 } KProcess##sys;
+
+enum KProcess_CustomFlags
+{
+    ForceRWXPages = 1 << 0,
+    SignalOnMemLayoutChanges = 1 << 1,
+    SignalOnExit = 1 << 2,
+
+    MemLayoutChanged = 1 << 16
+};
 
 INSTANCIATE_KPROCESS(N3DS);
 INSTANCIATE_KPROCESS(O3DS8x);
@@ -1134,6 +1198,28 @@ typedef struct FcramLayout
   u32 baseSize;
 } FcramLayout;
 
+typedef struct RegionDescriptor
+{
+    void               *firstMemoryBlock;
+    void               *lastMemoryBlock;
+    void               *regionStart;
+    u32                 regionSizeInBytes;
+}   RegionDescriptor;
+
+typedef struct FcramDescriptor
+{
+    RegionDescriptor    appRegion;
+    RegionDescriptor    sysRegion;
+    RegionDescriptor    baseRegion;
+    RegionDescriptor *  regionDescsPtr;
+    u32                 fcramStart;
+    u32                 fcramSizeInPages;
+    u32                 baseMemoryStart;
+    u32                 kernelUsageInBytes;
+    u32                 unknown;
+    KObjectMutex        mutex;
+}   FcramDescriptor;
+
 extern bool isN3DS;
 extern void *officialSVCs[0x7E];
 
@@ -1161,29 +1247,44 @@ offsetof(classname##O3DSPre8x, field)))
 #define KPROCESSHWINFO_GET_RVALUE(obj, field)             *(KPROCESSHWINFO_GET_PTR(obj, field))
 #define KPROCESSHWINFO_GET_RVALUE_TYPE(type, obj, field)  *(KPROCESSHWINFO_GET_PTR_TYPE(type, obj, field))
 
+extern u32 pidOffsetKProcess, hwInfoOffsetKProcess, codeSetOffsetKProcess, handleTableOffsetKProcess, debugOffsetKProcess, flagsKProcess;
+
 static inline u32 idOfProcess(KProcess *process)
 {
-    return KPROCESS_GET_RVALUE(process, processId);
+    u32 id;
+    memcpy(&id, (const u8 *)process + pidOffsetKProcess, 4);
+    return id;
 }
 
 static inline KProcessHwInfo *hwInfoOfProcess(KProcess *process)
 {
-    return KPROCESS_GET_PTR_TYPE(KProcessHwInfo, process, hwInfo);
+    return (KProcessHwInfo *)((uintptr_t)process + hwInfoOffsetKProcess);
 }
 
 static inline KCodeSet *codeSetOfProcess(KProcess *process)
 {
-    return KPROCESS_GET_RVALUE(process, codeSet);
+    KCodeSet *cs;
+    memcpy(&cs, (const u8 *)process + codeSetOffsetKProcess, 4);
+    return cs;
 }
 
 static inline KProcessHandleTable *handleTableOfProcess(KProcess *process)
 {
-    return KPROCESS_GET_PTR(process, handleTable);
+    return (KProcessHandleTable *)((uintptr_t)process + handleTableOffsetKProcess);
 }
 
 static inline KDebug *debugOfProcess(KProcess *process)
 {
-    return KPROCESS_GET_RVALUE(process, debug);
+    KDebug *debug;
+    memcpy(&debug, (const u8 *)process + debugOffsetKProcess, 4);
+    return debug;
+}
+
+static inline u32 flagsOfProcess(KProcess *process)
+{
+    u32 flags;
+    memcpy(&flags, (const u8 *)process + flagsKProcess, 4);
+    return flags;
 }
 
 static inline const char *classNameOfAutoObject(KAutoObject *object)

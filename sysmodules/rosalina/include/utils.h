@@ -29,6 +29,7 @@
 #include <3ds/svc.h>
 #include <3ds/srv.h>
 #include <3ds/result.h>
+#include <3ds/ipc.h>
 #include "csvc.h"
 #include "luma_shared_config.h"
 
@@ -40,6 +41,8 @@
 #endif
 
 #define REG32(addr)             (*(vu32 *)(PA_PTR(addr)))
+
+#define CLAMP(v, m, M)          ((v) <= (m) ? (m) : (v) >= (M) ? (M) : (v))
 
 static inline u32 makeArmBranch(const void *src, const void *dst, bool link) // the macros for those are ugly and buggy
 {
@@ -58,6 +61,24 @@ static inline void *decodeArmBranch(const void *src)
     return (void *)((const u8 *)src + 8 + off);
 }
 
+static inline void assertSuccess(Result res)
+{
+    if(R_FAILED(res))
+        svcBreak(USERBREAK_PANIC);
+}
+
+static inline void error(u32* cmdbuf, Result rc)
+{
+    cmdbuf[0] = IPC_MakeHeader(0, 1, 0);
+    cmdbuf[1] = rc;
+}
+
+extern bool  isN3DS;
+
+Result OpenProcessByName(const char *name, Handle *h);
+Result SaveSettings(void);
+extern bool saveSettingsRequest;
+void RequestSaveSettings(void);
 static inline bool isServiceUsable(const char *name)
 {
     bool r;
@@ -67,3 +88,5 @@ static inline bool isServiceUsable(const char *name)
 void formatMemoryPermission(char *outbuf, MemPerm perm);
 void formatUserMemoryState(char *outbuf, MemState state);
 u32 formatMemoryMapOfProcess(char *outbuf, u32 bufLen, Handle handle);
+int dateTimeToString(char *out, u64 msSince1900, bool filenameFormat);
+int floatToString(char *out, float f, u32 precision, bool pad);
