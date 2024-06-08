@@ -29,7 +29,9 @@ jobs:
           curl -L https://github.com/3DSGuy/Project_CTR/releases/download/makerom-v0.17/makerom-v0.17-ubuntu_x86_64.zip | zcat > makerom && chmod +x makerom && install makerom /usr/local/bin/makerom
           pip3 install -U git+https://github.com/TuxSH/firmtool.git
       - name: Build Luma3DS
-        run: make
+        run: |
+          git config --global --add safe.directory '*'
+          make
       - name: Archive boot.firm
         uses: actions/upload-artifact@v4
         with:
