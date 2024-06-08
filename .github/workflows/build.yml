@@ -2,7 +2,7 @@ name: Build Luma3DS
 
 on:
   push:
-    branches: ["*"]
+    branches: ["main"]
     paths-ignore:
       - 'README.md'
   pull_request:
@@ -26,4 +26,10 @@ jobs:
           pip3 install -U git+https://github.com/TuxSH/firmtool.git
       - name: Build Luma3DS
         run: make
+      - name: Archive boot.firm
+        uses: actions/upload-artifact@v4
+        with:
+          name: boot.firm
+          path: |
+            boot.firm
         
