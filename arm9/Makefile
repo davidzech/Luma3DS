@@ -16,6 +16,8 @@ export VERSION_BUILD	:=	$(shell git describe --tags --match 'v[0-9]*' | cut -c2-
 export COMMIT			:=	$(shell git rev-parse --short=8 HEAD)
 export IS_RELEASE		:=	0
 
+$(info REVISION is $(REVISION))
+
 ifeq ($(strip $(REVISION)),)
 	export REVISION			:=	v0.0.0-0
 	export VERSION_MAJOR	:=	0
